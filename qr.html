@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <title>Tạo QR Code với nền ảnh</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+    h1 {
+      color: #333;
+    }
+    textarea {
+      width: 300px;
+      height: 80px;
+      padding: 10px;
+      font-size: 16px;
+      margin-bottom: 10px;
+      resize: none;
+    }
+    input[type="file"] {
+      margin: 10px 0;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #2196f3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #1976d2;
+    }
+    canvas {
+      margin-top: 30px;
+      border: 1px solid #ccc;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tạo QR Code với nền ảnh</h1>
+
+  <textarea id="qrText" placeholder="Nhập văn bản hoặc link…"></textarea><br />
+  <input type="file" id="bgInput" accept="image/*" /><br />
+  <button onclick="generateQR()">Tạo QR</button>
+
+  <canvas id="qrCanvas" width="300" height="300"></canvas>
+
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script>
+    function generateQR() {
+      const text = document.getElementById('qrText').value.trim();
+      const bgFile = document.getElementById('bgInput').files[0];
+      const canvas = document.getElementById('qrCanvas');
+      const ctx = canvas.getContext('2d');
+
+      if (!text) {
+        alert('Vui lòng nhập nội dung để tạo mã QR!');
+        return;
+      }
+
+      if (!bgFile) {
+        // Nếu không chọn ảnh nền, chỉ tạo QR đơn giản
+        QRCode.toCanvas(canvas, text, { width: 300 }, function (error) {
+          if (error) alert(error);
+        });
+        return;
+      }
+
+      // Nếu có ảnh nền, đọc ảnh rồi vẽ lên canvas, sau đó vẽ QR code chồng lên
+      const reader = new FileReader();
+      reader.onload = function (e) {
+        const img = new Image();
+        img.onload = function () {
+          // Vẽ nền ảnh vừa với canvas
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+          // Tạo QR code trên một canvas riêng (tạm thời)
+          const qrCanvasTemp = document.createElement('canvas');
+          qrCanvasTemp.width = 300;
+          qrCanvasTemp.height = 300;
+
+          QRCode.toCanvas(qrCanvasTemp, text, { width: 300, margin: 1, color: { dark: '#000', light: '#0000' } }, function (error) {
+            if (error) {
+              alert(error);
+              return;
+            }
+
+            // Lấy dữ liệu QR từ canvas tạm, vẽ chồng lên canvas chính
+            ctx.drawImage(qrCanvasTemp, 0, 0);
+
+          });
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(bgFile);
+    }
+  </script>
+
+</body>
+</html>
